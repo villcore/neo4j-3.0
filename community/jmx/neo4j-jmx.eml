@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component LANGUAGE_LEVEL="JDK_1_8" inheritJdk="true">
+	<output-test url="file://$MODULE_DIR$/target/test-classes"/>
+	<contentEntry url="file://$MODULE_DIR$">
+		<testFolder url="file://$MODULE_DIR$/src/test/java"/>
+		<excludeFolder url="file://$MODULE_DIR$/target"/>
+	</contentEntry>
+	<module name="neo4j-kernel" scope="PROVIDED"/>
+	<module name="neo4j-graphdb-api" scope="PROVIDED"/>
+	<module name="neo4j-resource" scope="PROVIDED"/>
+	<module name="neo4j-common" scope="PROVIDED"/>
+	<module name="neo4j-collections" scope="PROVIDED"/>
+	<module name="neo4j-primitive-collections" scope="PROVIDED"/>
+	<module name="neo4j-io" scope="PROVIDED"/>
+	<module name="neo4j-csv" scope="PROVIDED"/>
+	<module name="neo4j-logging" scope="PROVIDED"/>
+	<module name="neo4j-security" scope="PROVIDED"/>
+	<module name="neo4j-lucene-upgrade" scope="PROVIDED"/>
+	<lib name="Maven: org.apache.lucene:lucene-core:5.5.0" scope="PROVIDED"/>
+	<lib name="Maven: org.apache.lucene:lucene-backward-codecs:5.5.0" scope="PROVIDED"/>
+	<lib name="Maven: junit:junit:4.12" scope="TEST"/>
+	<lib name="Maven: org.hamcrest:hamcrest-core:1.3" scope="TEST"/>
+	<module name="neo4j-kernel" scope="TEST"/>
+	<module name="neo4j-io" scope="TEST"/>
+	<module name="neo4j-unsafe" scope="PROVIDED"/>
+	<lib name="Maven: org.apache.commons:commons-lang3:3.3.2" scope="PROVIDED"/>
+	<levels>
+		<level name="Maven: org.apache.lucene:lucene-core:5.5.0" value="project"/>
+		<level name="Maven: org.apache.lucene:lucene-backward-codecs:5.5.0" value="project"/>
+		<level name="Maven: junit:junit:4.12" value="project"/>
+		<level name="Maven: org.hamcrest:hamcrest-core:1.3" value="project"/>
+		<level name="Maven: org.apache.commons:commons-lang3:3.3.2" value="project"/>
+	</levels>
+</component>
