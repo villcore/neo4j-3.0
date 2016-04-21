@@ -64,13 +64,11 @@ import static org.neo4j.helpers.collection.Iterators.asList;
 import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_RELATIONSHIP_TYPE;
 import static org.neo4j.kernel.impl.core.TokenHolder.NO_ID;
 
-public class NodeProxy
-        extends PropertyContainerProxy
-        implements Node
+public class NodeProxy extends PropertyContainerProxy implements Node
 {
     public interface NodeActions
     {
-        Statement statement();
+        Statement  statement();
 
         GraphDatabaseService getGraphDatabase();
 

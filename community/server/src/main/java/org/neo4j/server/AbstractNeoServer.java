@@ -146,7 +146,7 @@ public abstract class AbstractNeoServer implements NeoServer
 
     ////////////////////TCP SERVER//////////////////////////
     protected TcpServer tcpServer;
-    protected TcpServer.Dependencies tcpDependencies;
+    public static TcpServer.Dependencies tcpDependencies;
 
     private String tcpAddress;
     private int tcpPort;

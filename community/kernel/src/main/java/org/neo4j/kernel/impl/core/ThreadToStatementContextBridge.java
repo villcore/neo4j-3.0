@@ -47,15 +47,18 @@ public class ThreadToStatementContextBridge extends LifecycleAdapter implements 
 
     public void bindTransactionToCurrentThread( KernelTransaction transaction )
     {
+        System.out.printf("***bind transaction [%s] to [%s]\n", transaction.toString(), Thread.currentThread().toString());
         if ( threadToTransactionMap.get() != null )
         {
             throw new IllegalStateException( Thread.currentThread() + " already has a transaction bound" );
         }
-        threadToTransactionMap.set( transaction );
+        threadToTransactionMap.set(transaction);
     }
 
     public void unbindTransactionFromCurrentThread()
     {
+       KernelTransaction transaction = threadToTransactionMap.get();
+        System.out.printf("***remove transaction[%s] from [%s]\n", transaction.toString(), Thread.currentThread().toString());
         threadToTransactionMap.remove();
     }
 
@@ -68,7 +71,6 @@ public class ThreadToStatementContextBridge extends LifecycleAdapter implements 
 
     private void assertInUnterminatedTransaction( KernelTransaction transaction )
     {
-        //System.out.println("=========================================================================" + (transaction == null) + " - " + Thread.currentThread().getName());
         if ( transaction == null )
         {
             throw new BridgeNotInTransactionException();

@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.globigdata.neo4j.util.LogUtil;
 import com.globigdata.neo4j.util.TcpServerQuerySession;
 import org.neo4j.cypher.internal.javacompat.ExecutionEngine;
+import org.neo4j.cypher.javacompat.internal.GraphDatabaseCypherService;
 import org.neo4j.kernel.GraphDatabaseQueryService;
 import org.neo4j.kernel.api.security.AccessMode;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -80,16 +81,14 @@ public class CypherExecutor extends LifecycleAdapter
     {
         InternalTransaction transaction = service.beginTransaction( KernelTransaction.Type.implicit, AccessMode.Static.FULL );
         TransactionalContext context = new Neo4jTransactionalContext( service, transaction, txBridge.get(), locker );
-        log.info("createSession transaction context is [%s]", context.toString());
+        //log.info("createSession transaction context is [%s]", context.toString());
         return new ServerQuerySession( request, context );
-        //return new TcpServerQuerySession( context );
-
     }
 
     public QuerySession createTcpSession() {
         InternalTransaction transaction = service.beginTransaction( KernelTransaction.Type.implicit, AccessMode.Static.FULL );
         TransactionalContext context = new Neo4jTransactionalContext( service, transaction, txBridge.get(), locker );
-        log.info("createTcpSession transaction context is [%s]", context.toString());
+        //log.info("createTcpSession transaction context is [%s]", context.toString());
         return new TcpServerQuerySession( context );
     }
 }

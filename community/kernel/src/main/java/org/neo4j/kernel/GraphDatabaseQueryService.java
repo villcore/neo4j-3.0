@@ -30,7 +30,7 @@ import org.neo4j.kernel.api.security.AccessMode;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 
-/*
+/**
  * This is a trimmed down version of GraphDatabaseService and GraphDatabaseAPI, limited to a subset of functions needed
  * by implementations of QueryExecutionEngine.
  */

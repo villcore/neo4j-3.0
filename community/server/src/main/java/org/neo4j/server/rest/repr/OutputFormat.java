@@ -33,6 +33,7 @@ import javax.ws.rs.core.StreamingOutput;
 import org.neo4j.server.rest.web.NodeNotFoundException;
 import org.neo4j.server.rest.web.RelationshipNotFoundException;
 import org.neo4j.server.web.HttpHeaderUtils;
+import org.neo4j.shell.impl.SystemOutput;
 import org.neo4j.string.UTF8;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -77,13 +78,13 @@ public class OutputFormat
         {
             return noContent();
         }
-        return response( Response.ok().header( HttpHeaders.LOCATION, uri( representation ) ), representation );
+        return response( Response.ok().header(HttpHeaders.LOCATION, uri(representation)), representation );
     }
 
     public final <REPR extends Representation & EntityRepresentation> Response created( REPR representation )
             throws BadInputException
     {
-        return response( Response.created( uri( representation ) ), representation );
+        return response( Response.created(uri(representation)), representation );
     }
 
     public final Response response( Response.StatusType status, Representation representation )
@@ -104,18 +105,18 @@ public class OutputFormat
 
     public Response badRequest( Throwable exception )
     {
-        return response( Response.status( BAD_REQUEST ), new ExceptionRepresentation( exception ) );
+        return response(Response.status(BAD_REQUEST), new ExceptionRepresentation(exception));
     }
 
     public Response notFound( Throwable exception )
     {
-        return response( Response.status( Status.NOT_FOUND ), new ExceptionRepresentation( exception ) );
+        return response(Response.status(Status.NOT_FOUND), new ExceptionRepresentation(exception));
     }
 
     public Response notFound()
     {
         representationWriteHandler.onRepresentationFinal();
-        return Response.status( Status.NOT_FOUND )
+        return Response.status(Status.NOT_FOUND)
                 .build();
     }
 
@@ -140,17 +141,17 @@ public class OutputFormat
      * @return the internal server error response
      */    public Response serverErrorWithoutLegacyStacktrace( Throwable exception )
     {
-        return response( Response.status( Status.INTERNAL_SERVER_ERROR ), new ExceptionRepresentation( exception, false ) );
+        return response(Response.status(Status.INTERNAL_SERVER_ERROR), new ExceptionRepresentation(exception, false));
     }
 
     public Response serverError( Throwable exception )
     {
-        return response( Response.status( Status.INTERNAL_SERVER_ERROR ), new ExceptionRepresentation( exception ) );
+        return response(Response.status(Status.INTERNAL_SERVER_ERROR), new ExceptionRepresentation(exception));
     }
 
     private URI uri( EntityRepresentation representation ) throws BadInputException
     {
-        return URI.create( assemble( representation.selfUri() ) );
+        return URI.create(assemble(representation.selfUri()));
     }
 
     protected Response response( ResponseBuilder response, Representation representation )

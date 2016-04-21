@@ -337,7 +337,6 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI
             // FIXME: perhaps we should check that the new type and access mode are compatible with the current tx
             return new PlaceboTransaction( spi::currentTransaction, spi::currentStatement );
         }
-
         return new TopLevelTransaction( spi.beginTransaction( type, accessMode ), spi::currentStatement );
     }
 
