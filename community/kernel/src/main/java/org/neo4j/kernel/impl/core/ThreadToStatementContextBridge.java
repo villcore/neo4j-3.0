@@ -47,7 +47,6 @@ public class ThreadToStatementContextBridge extends LifecycleAdapter implements 
 
     public void bindTransactionToCurrentThread( KernelTransaction transaction )
     {
-        System.out.printf("***bind transaction [%s] to [%s]\n", transaction.toString(), Thread.currentThread().toString());
         if ( threadToTransactionMap.get() != null )
         {
             throw new IllegalStateException( Thread.currentThread() + " already has a transaction bound" );
@@ -58,7 +57,6 @@ public class ThreadToStatementContextBridge extends LifecycleAdapter implements 
     public void unbindTransactionFromCurrentThread()
     {
        KernelTransaction transaction = threadToTransactionMap.get();
-        System.out.printf("***remove transaction[%s] from [%s]\n", transaction.toString(), Thread.currentThread().toString());
         threadToTransactionMap.remove();
     }
 

@@ -74,7 +74,6 @@ class ClassicCoreSPI implements GraphDatabaseFacade.SPI
         try
         {
             availability.assertDatabaseAvailable();
-            System.out.println("-----------------------------------------" + query);
             return dataSource.queryExecutor.get().executeQuery( query, parameters, querySession );
         }
         catch ( QueryExecutionKernelException e )
@@ -172,15 +171,7 @@ class ClassicCoreSPI implements GraphDatabaseFacade.SPI
         {
             availability.assertDatabaseAvailable();
             KernelTransaction kernelTx = dataSource.kernelAPI.get().newTransaction( type, accessMode );
-            kernelTx.registerCloseListener(new KernelTransaction.CloseListener() {
-                @Override
-                public void notify(boolean success) {
-                    System.out.printf("\ntransaction [%s] closed...\n", kernelTx.toString());
-                    dataSource.threadToTransactionBridge.unbindTransactionFromCurrentThread();
-                }
-            });
-            //(s) -> dataSource.threadToTransactionBridge.unbindTransactionFromCurrentThread()
-            System.out.println("------------------------------------");
+            kernelTx.registerCloseListener((s) -> dataSource.threadToTransactionBridge.unbindTransactionFromCurrentThread());
             dataSource.threadToTransactionBridge.bindTransactionToCurrentThread( kernelTx );
             return kernelTx;
         }

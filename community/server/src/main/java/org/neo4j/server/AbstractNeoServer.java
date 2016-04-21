@@ -239,6 +239,7 @@ public abstract class AbstractNeoServer implements NeoServer
                 dependencies.add(OutputFormat.class, new JsonFormat());
                 dependencies.add(Config.class, this.config);
                 dependencies.add(LogProvider.class, this.logProvider);
+                dependencies.add(Database.class, this.database);
                 //dependencies.add(OutputFormat.class, new OutputFormat());
                // org.neo4j.server.rest.repr.formats.JsonFormat, output format class = org.neo4j.server.rest.repr.OutputFormat
 

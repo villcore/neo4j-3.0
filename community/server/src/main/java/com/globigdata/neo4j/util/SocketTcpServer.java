@@ -32,9 +32,8 @@ public class SocketTcpServer implements TcpServer {
     @Override
     public void setAddress(String address) {
         try {
-            this.address =InetAddress.getByName(address);
-        }
-        catch (UnknownHostException e) {
+            this.address = InetAddress.getByName(address);
+        } catch (UnknownHostException e) {
             log.error(e.getMessage());
             this.address = null;
         }
@@ -61,38 +60,15 @@ public class SocketTcpServer implements TcpServer {
             @Override
             public void run() {
                 log.info("TcpServer start listene...");
-                while(true) {
+                while (true) {
                     try {
                         Socket socket = serverSocket.accept();
                         log.info("client socket connected...");
-                        new Thread(new ClientSocketTask(socket)).start();
-                    }
-                    catch (IOException e) {
+                        new ClientSocketTask(socket).start();
+                    } catch (IOException e) {
                         log.error(e.getMessage());
                     }
                 }
-            }
-        }).start();
-        //单独为每一个连接到的socket开辟一个线程（仅供测试使用)
-        //新建一个线程在30s之后进行模拟的请求
-        String queryStr = "{\"query\" : \"CREATE (n:DISTRICT1:INSTANCE1:batch_insert_test_0 { props } ) RETURN n\",\"params\": {\"props\" : {\"prop1\":\"value1\",\"prop2\":\"value2\",\"id\":\"1\"} }}";
-        TcpRequest request = new TcpRequest("local", UUID.randomUUID(), System.currentTimeMillis(), TcpMoudleType.CYPHER.getType(), OperateType.EXECUTE.getType(), queryStr);
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int leftTime = 5;
-                while(leftTime > 0) {
-                    try {
-                        Thread.sleep(1000);
-                        log.info("left time to send mock tcp request is [%d]", leftTime);
-                        leftTime--;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                log.info("send mock tcp request...");
-                mockOnRequest(request);
             }
         }).start();
     }
@@ -102,12 +78,11 @@ public class SocketTcpServer implements TcpServer {
 //        for(TcpServerMoudle moudle : moudleMap.values()) {
 //            moudle.stop();
 //        }
-        for(Socket socket : socketMap.values()) {
-            if(!socket.isClosed()) {
+        for (Socket socket : socketMap.values()) {
+            if (!socket.isClosed()) {
                 try {
                     socket.close();
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     log.error(e.getMessage());
                 }
             }
@@ -123,7 +98,7 @@ public class SocketTcpServer implements TcpServer {
     @Override
     public void removeMoudle(TcpMoudleType moudleType) {
         TcpServerMoudle moudle = moudleMap.get(moudleType);
-        if(moudle != null) {
+        if (moudle != null) {
             moudle.stop();
         }
     }
@@ -133,7 +108,7 @@ public class SocketTcpServer implements TcpServer {
         this.dependencies = dependencies;
     }
 
-    public void onRequest(Socket socket, TcpRequest request) {
+    public TcpResponse onRequest(Socket socket, TcpRequest request) {
         String clientId = request.getClientId();
         socketMap.putIfAbsent(clientId, socket);
 
@@ -143,106 +118,125 @@ public class SocketTcpServer implements TcpServer {
         TcpServerMoudle moudle = moudleMap.get(moudleType);
         TcpResponse response = moudle.getService().execute(operateType, request);
 
-        log.info(response.toString());
-        onResponse(socketMap.get(clientId), response);
+        return response;
     }
 
-    public void mockOnRequest(TcpRequest request) {
-        String clientId = request.getClientId();
-
-        TcpMoudleType moudleType = TcpMoudleType.valueOf(request.getMoudleType().toUpperCase());
-        OperateType operateType = OperateType.valueOf(request.getOperateType().toUpperCase());
-
-        TcpServerMoudle moudle = moudleMap.get(moudleType);
-        TcpResponse response = moudle.getService().execute(operateType, request);
-
-        log.info(response.toString());
-    }
-
-    public void onResponse(Socket socket, TcpResponse response) {
+    public void onResponse(Socket socket, TcpResponse response) throws IOException {
         writeObject(socket, response);
     }
 
-    public void write(Socket socket, byte[] bytes) {
-        try {
+    public void write(Socket socket, byte[] bytes) throws IOException{
             OutputStream os = socket.getOutputStream();
             os.write(bytes);
             os.flush();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            removeSocket(socket);
-        }
     }
 
     public void removeSocket(Socket socket) {
-        for(Map.Entry<String, Socket> entry : socketMap.entrySet()) {
-            if(entry.getValue() == socket) {
+        for (Map.Entry<String, Socket> entry : socketMap.entrySet()) {
+            if (entry.getValue() == socket) {
                 socketMap.remove(entry.getKey());
             }
         }
+
+        if (socket != null) {
+            if (!socket.isClosed()) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    log.error(e.getMessage());
+                }
+            }
+        }
     }
 
-    public void writeObject(Socket socket, Object obj) {
-        try{
+    public void writeObject(Socket socket, Object obj) throws IOException{
             ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
             oos.writeObject(obj);
             oos.flush();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            removeSocket(socket);
-        }
     }
 
-    public <T> T readObject(Socket socket, Class<T> clazz) {
-        try {
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-            Object obj = ois.readObject();
-            if(obj.getClass() == clazz) {
-                return (T)obj;
-            }
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            removeSocket(socket);
-        }
-        catch (ClassNotFoundException e) {
-            log.error(e.getMessage());
+    public <T> T readObject(Socket socket, Class<T> clazz) throws ClassNotFoundException, IOException {
+        ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
+        Object obj = ois.readObject();
+        if (obj != null && obj.getClass() == clazz) {
+            return (T) obj;
         }
         return null;
     }
 
-    public byte[] read(Socket socket) {
-        byte[] bytes = new byte[1024];
-        int pos = -1;
-        try {
-            InputStream in = socket.getInputStream();
-             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            while ((pos = in.read(bytes)) > 0) {
-                bos.write(bytes, 0, pos);
+    public String getClient(Socket socket) {
+        String client = null;
+        for (Map.Entry<String, Socket> entry : socketMap.entrySet()) {
+            if (entry.getValue() == socket) {
+                client = entry.getKey();
             }
-            return bos.toByteArray();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            removeSocket(socket);
         }
-        return null;
+        return client;
     }
+
+//    public byte[] read(Socket socket) {
+//        byte[] bytes = new byte[1024];
+//        int pos = -1;
+//        try {
+//            InputStream in = socket.getInputStream();
+//            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//            while ((pos = in.read(bytes)) > 0) {
+//                bos.write(bytes, 0, pos);
+//            }
+//            return bos.toByteArray();
+//        } catch (IOException e) {
+//            log.error(e.getMessage());
+//            removeSocket(socket);
+//        }
+//        return null;
+//    }
 
     class ClientSocketTask implements Runnable {
         private Socket socket;
+        private volatile boolean isRun;
+
         public ClientSocketTask(Socket socket) {
             this.socket = socket;
+            isRun = false;
         }
+
+        public void start() {
+            this.isRun = true;
+            new Thread(this).start();
+        }
+
+        public void stop() {
+            this.isRun = false;
+        }
+
         @Override
         public void run() {
-            while(true) {
+            while (isRun) {
                 log.info("%s wait for read data...");
-                TcpRequest request = readObject(socket, TcpRequest.class);
-                log.info(request.toString());
-                if(request != null) {
-                    onRequest(socket, request);
-                }
+                try {
+                    TcpRequest request = readObject(socket, TcpRequest.class);
+                    if (request != null) {
+                        TcpResponse response = onRequest(socket, request);
+                        onResponse(socket, response);
+                    }
+                    try {
+                        Thread.sleep(10000);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    log.error("{%s} client with {%s} address connection closed...", getClient(socket), socket.getInetAddress().toString());
+                    this.stop();
+                    removeSocket(socket);
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                    log.error(e.getMessage());
+                    this.stop();
+                    removeSocket(socket);
                 }
             }
         }
 
+    }
 }

@@ -2,11 +2,14 @@ package com.globigdata.neo4j.util;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.neo4j.cypher.javacompat.internal.GraphDatabaseCypherService;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.GraphDatabaseQueryService;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.api.security.AccessMode;
 import org.neo4j.kernel.configuration.Config;
+import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.coreapi.PropertyContainerLocker;
 import org.neo4j.kernel.impl.factory.GraphDatabaseFacade;
@@ -14,6 +17,7 @@ import org.neo4j.kernel.impl.query.*;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.LogProvider;
 import org.neo4j.server.database.CypherExecutor;
+import org.neo4j.server.database.Database;
 import org.neo4j.server.plugins.PluginManager;
 import org.neo4j.server.rest.repr.*;
 import org.neo4j.server.rest.repr.formats.JsonFormat;
@@ -44,8 +48,15 @@ public class CypherService implements Service {
     private final DefaultFormat defaultFormat;
     private final PluginManager pluginManager;
 
+    private final Database database;
+    private final GraphDatabaseService graphDatabaseService;
+
+    //TODO 一些固定属性
     public CypherService(TcpServer.Dependencies dependencies) {
         this.cypherExecutor = dependencies.get(CypherExecutor.class);
+
+        this.database = dependencies.get(Database.class);
+        this.graphDatabaseService = database.getGraph();
 //        this.input = dependencies.get(InputFormat.class);
 //        this.output = dependencies.get(OutputFormat.class);
         this.input = new JsonFormat();
@@ -111,11 +122,28 @@ public class CypherService implements Service {
         }
 
         try {
-            QueryExecutionEngine executionEngine = cypherExecutor.getExecutionEngine();
-            QuerySession querySession = cypherExecutor.createTcpSession();
+            String resultStr = "";
+            try (Transaction transaction = this.graphDatabaseService.beginTx();
+                    Result result = this.graphDatabaseService.execute(query, params)) {
 
+                //目前在这里进行Json字符串的包装与解析（难度较大，横跨多个类，好困惑！！）
+                CypherResultRepresentation cypherResultRepresentation = new CypherResultRepresentation( result, false, false );
+
+                Response responsePojo = output.ok(cypherResultRepresentation);
+                byte[] respBytes = (byte[])responsePojo.getEntity();
+//                String respStr = new String(respBytes, "utf-8");
+//                log.info("=====================================================================");
+//                log.info("\n" + respStr);
+                resultStr = new String(respBytes, "utf-8");
+                transaction.success();
+            }
             /*
-            /////////////////////////////////以下代码测试///////////////////////////////////////////
+            QueryExecutionEngine executionEngine = cypherExecutor.getExecutionEngine();
+            ///////////////////////////////////以上内容为通用的，不可删除////////////////////////////////////
+
+
+            /////////////////////////////////以下代码为手动使用查询生成代码///////////////////////////////////////////
+
             //手动代码创建session
             final PropertyContainerLocker locker = new PropertyContainerLocker();
             GraphDatabaseCypherService service = (GraphDatabaseCypherService) executionEngine.queryService();
@@ -127,37 +155,39 @@ public class CypherService implements Service {
             spiField.setAccessible(true);
             GraphDatabaseFacade.SPI spi = (GraphDatabaseFacade.SPI) spiField.get(graphDatabaseFacade);
 
-            try(InternalTransaction transaction = service.beginTransaction(KernelTransaction.Type.implicit, AccessMode.Static.FULL )) {
-                TransactionalContext transactionalContext = new Neo4jTransactionalContext(service, transaction, spi.currentStatement(), locker);
-                Result result = spi.executeQuery(query, params, QueryEngineProvider.embeddedSession(transactionalContext));
+//            try(InternalTransaction transaction = service.beginTransaction(KernelTransaction.Type.implicit, AccessMode.Static.FULL )) {
+//                TransactionalContext transactionalContext = new Neo4jTransactionalContext(service, transaction, spi.currentStatement(), locker);
+//                Result result = spi.executeQuery(query, params, QueryEngineProvider.embeddedSession(transactionalContext));
+//
+//                log.info("query result is [%s]", result.resultAsString());
+////                CypherResultRepresentation cypherResultRepresentation = new CypherResultRepresentation(result, false, false);
+//
+////                Response responsePojo = output.ok(cypherResultRepresentation);
+////                byte[] respBytes = (byte[]) responsePojo.getEntity();
+////                String respStr = new String(respBytes, "utf-8");
+////                log.info("=====================================================================");
+////                log.info("\n" + respStr);
+//            }
 
-                CypherResultRepresentation cypherResultRepresentation = new CypherResultRepresentation(result, false, false);
+*/
+            /////////////////////////////////////////以下代码是原来代码，有事务关闭问题/////////////////////////////////////
 
-                Response responsePojo = output.ok(cypherResultRepresentation);
-                byte[] respBytes = (byte[]) responsePojo.getEntity();
-                String respStr = new String(respBytes, "utf-8");
-                log.info("=====================================================================");
-                log.info("\n" + respStr);
-            }
 
-//            Result result = executionEngine.executeQuery(query, params, querySession);
-                */
-
+            /*
+//          QuerySession querySession = cypherExecutor.createTcpSession();
             Result result = executionEngine.executeQuery(query, params, querySession);
 
-           // log.info("\n" + result.resultAsString());
+//            log.info("\n" + result.resultAsString());
 //            log.info("colums = %s", result.columns().toString());
 //
             CypherResultRepresentation cypherResultRepresentation = new CypherResultRepresentation( result, false, false );
-            System.out.println(Thread.currentThread().toString());
-            //Method serializeMethod = MappingRepresentation.class.getDeclaredMethod("serialize", new Class[]{RepresentationFormat.class, URI.class, ExtensionInjector.class});
-//           String str = cypherResultRepresentation.defaultSerialize(defaultFormat, URI.create("http://localhost:7474/db/data/"), pluginManager);
-//
+
             Response responsePojo = output.ok(cypherResultRepresentation);
             byte[] respBytes = (byte[])responsePojo.getEntity();
             String respStr = new String(respBytes, "utf-8");
             log.info("=====================================================================");
             log.info("\n" + respStr);
+
             //使用如下代码会造成返回结果中没有data
 //            while (result.hasNext()) {
 //                Map<String, Object> map = result.next();
@@ -167,11 +197,12 @@ public class CypherService implements Service {
 //            }
 //            log.info("\n" + result.resultAsString());
 //
+                */
+            /////////////////////////////////////////以上代码为web查询代码，有问题，事务关闭//////////////////////////////////////////////
 
 
-
-//          response.setStatus("success");
-//          response.setData(respStr);
+          response.setStatus("success");
+          response.setData(resultStr);
         } catch (Throwable e) {
             e.printStackTrace();
             response.setStatus("error");

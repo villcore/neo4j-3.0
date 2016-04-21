@@ -90,5 +90,4 @@ public class GraphDatabaseCypherService implements GraphDatabaseQueryService
     {
         return graph;
     }
-
 }
