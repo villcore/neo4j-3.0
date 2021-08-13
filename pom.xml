@@ -26,7 +26,7 @@
     <licensing.prepend.text>notice-agpl-prefix.txt</licensing.prepend.text>
     <licensing.phase>compile</licensing.phase>
     <lucene.version>5.5.0</lucene.version>
-    <bouncycastle.version>1.53</bouncycastle.version>
+    <bouncycastle.version>1.67</bouncycastle.version>
     <generate-config-docs-phase>prepare-package</generate-config-docs-phase>
     <hsqldb.version>2.3.2</hsqldb.version>
     <test.runner.jvm.settings>-Xmx1G -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=target/test-data -Dorg.neo4j.unsafe.impl.internal.dragons.UnsafeUtil.DIRTY_MEMORY=true -XX:+UnlockExperimentalVMOptions -XX:+TrustFinalNonStaticFields</test.runner.jvm.settings>
